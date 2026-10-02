@@ -948,12 +948,15 @@ function showEvent(eventObj){
       gameState.outsource = Math.max(0, gameState.outsource);
       refreshStatUI();
       addLog(`事件【${eventObj.title}】选择：${opt.text}，变动：${effectText}`);
+      // ========== 新增这一行：点击选项自动关闭事件弹窗 ==========
+      eventOverlay.style.display = "none";
     };
     eventOptionWrap.appendChild(btn);
   })
   eventOverlay.style.display = "flex";
   addLog(`触发事件：${eventObj.title}`);
 }
+
 
 function checkEvents(){
   for(let evt of eventPool){
