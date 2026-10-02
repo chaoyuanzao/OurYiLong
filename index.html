@@ -6,11 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>平面图热区交互｜点击锁定选中状态</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui, sans-serif;}
 body{
   background:#111;
   min-height:100vh;
   color:#fff;
+  overflow-x:hidden;
 }
 /* ========== 顶部横向状态栏 ========== */
 #topStatusBar{
@@ -44,10 +45,14 @@ body{
   color:#fff;
 }
 #mapWrap{
-  width:100%;
+  width:calc(100% - 320px);
   padding:12px;
   display:flex;
   justify-content:center;
+  transition: width 0.3s ease;
+}
+#mapWrap.sidebar-collapsed{
+  width:100%;
 }
 #mapSvg{
   width:95vw;
@@ -105,7 +110,6 @@ body{
   opacity:0.8;
   margin-top:3px;
 }
-
 /* ========== 详情面板【底部居中】 ========== */
 .infoPanel{
   position:fixed;
@@ -151,7 +155,6 @@ body{
   height:180px;
   margin:12px 0;
 }
-
 /* ========== 事件弹窗【新增】 ========== */
 .eventOverlay{
   position:fixed;
@@ -200,6 +203,61 @@ body{
   background:#447;
 }
 
+/* ========== 全局决策侧边栏（右侧可收起） ========== */
+.globalSidebar{
+  position:fixed;
+  top:0;
+  right:0;
+  width:320px;
+  height:100vh;
+  background:#1e1e1e;
+  border-left:1px solid #333;
+  padding:16px;
+  overflow-y:auto;
+  z-index:1000;
+  transition: transform 0.3s ease;
+}
+.globalSidebar.collapsed{
+  transform: translateX(320px);
+}
+.sideToggleBtn{
+  position:fixed;
+  right:320px;
+  top:80px;
+  background:#333;
+  color:white;
+  border:1px solid #555;
+  padding:7px 10px;
+  border-radius:6px 0 0 6px;
+  cursor:pointer;
+  z-index:1002;
+  transition:right 0.3s ease;
+}
+.globalSidebar.collapsed + .sideToggleBtn{
+  right:0px;
+}
+.schoolBadge{
+  width:100px;
+  height:100px;
+  object-fit:contain;
+  display:block;
+  margin:0 auto 16px;
+}
+.sideHeading{
+  text-align:center;
+  font-size:18px;
+  margin-bottom:8px;
+}
+.leaderText{
+  text-align:center;
+  color:#ccc;
+  margin-bottom:16px;
+}
+.decisionChartWrap{
+  width:100%;
+  height:220px;
+}
+
 @media (max-width:768px){
   .infoPanel{
     bottom:10px;
@@ -210,13 +268,38 @@ body{
     align-items:flex-start;
     gap:6px;
   }
+  /* 移动端：侧边栏放到屏幕底部 */
+  .globalSidebar{
+    width:100%;
+    height:40vh;
+    top:auto;
+    bottom:0;
+    right:0;
+    transform: translateY(0);
+  }
+  .globalSidebar.collapsed{
+    transform: translateY(40vh);
+  }
+  .sideToggleBtn{
+    right:auto;
+    left:50%;
+    transform:translateX(-50%);
+    top:auto;
+    bottom:40vh;
+    border-radius:6px 6px 0 0;
+  }
+  .globalSidebar.collapsed + .sideToggleBtn{
+    bottom:0;
+  }
+  #mapWrap{
+    width:100%;
+  }
 }
 </style>
 <!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-
 <!-- ========== 事件弹窗 ========== -->
 <div class="eventOverlay" id="eventOverlay">
   <div class="eventBox">
@@ -225,6 +308,18 @@ body{
     <div id="eventOptionWrap"></div>
   </div>
 </div>
+
+<!-- ========== 全局决策侧边栏 ========== -->
+<div class="globalSidebar" id="globalSide">
+  <img class="schoolBadge" src="校徽.png" alt="校徽">
+  <h3 class="sideHeading">校区全局决策状态</h3>
+  <div class="leaderText">当前领导人：校长</div>
+  <p style="text-align:center;margin-bottom:8px;">决策层势力权重占比</p>
+  <div class="decisionChartWrap">
+    <canvas id="decisionChart"></canvas>
+  </div>
+</div>
+<button class="sideToggleBtn" id="sideToggleBtn">收起</button>
 
 <!-- ========== 顶部横向平铺状态栏 ========== -->
 <div id="topStatusBar">
@@ -244,13 +339,11 @@ body{
     <div class="stat-item">升学率：<span id="statAdmit">62%</span></div>
   </div>
 </div>
-
 <div id="tooltipHover"></div>
 <div id="tooltipSelected">
   <div class="name"></div>
   <div class="desc"></div>
 </div>
-
 <!-- 详情面板 -->
 <div class="infoPanel" id="infoPanel">
   <div class="panelHeader">
@@ -267,7 +360,6 @@ body{
     <div id="pieLegend"></div>
   </div>
 </div>
-
 <!-- SVG地图容器 -->
 <div id="mapWrap">
 <svg id="mapSvg" viewBox="0 0 1509 960">
@@ -297,7 +389,6 @@ body{
   <polygon class="piece" data-name="操场围墙北" data-desc="操场北侧围墙范围" data-power="学校" data-floor="1F" data-facility="围墙" data-pie="学生,80,#4292c6;后勤,20,#74c476" points="1094.9 774.0,1298.9 791.0,1452.9 849.0,1457.9 958.0,1094.9 957.0,1093.9 770.0"/>
 </svg>
 </div>
-
 <script>
 const tooltipHover = document.getElementById('tooltipHover');
 const tooltipSelected = document.getElementById('tooltipSelected');
@@ -305,7 +396,6 @@ const selectedNameDom = tooltipSelected.querySelector('.name');
 const selectedDescDom = tooltipSelected.querySelector('.desc');
 const pieces = document.querySelectorAll('.piece');
 let activeItem = null;
-
 // 面板元素
 const infoPanel = document.getElementById('infoPanel');
 const panelClose = document.getElementById('panelClose');
@@ -315,23 +405,63 @@ const floorDom = document.getElementById('floor');
 const facilityDom = document.getElementById('facilityList');
 const pieLegendDom = document.getElementById('pieLegend');
 let pieChart = null;
-
 // 事件弹窗元素
 const eventOverlay = document.getElementById('eventOverlay');
 const eventTitle = document.getElementById('eventTitle');
 const eventDesc = document.getElementById('eventDesc');
 const eventOptionWrap = document.getElementById('eventOptionWrap');
 
+// ========== 全局决策层数据（权重总和100） ==========
+let decisionPowerData = [
+  {name:"教职工", weight:95, color:"#63aaff"},
+  {name:"学生会", weight:4, color:"#ffc857"},
+  {name:"普通学生", weight:1, color:"#52d3aa"}
+];
+let decisionChart = null;
+function initDecisionChart(){
+  const ctx = document.getElementById('decisionChart').getContext('2d');
+  decisionChart = new Chart(ctx,{
+    type:'pie',
+    data:{
+      labels: decisionPowerData.map(i=>i.name),
+      datasets:[{
+        data: decisionPowerData.map(i=>i.weight),
+        backgroundColor: decisionPowerData.map(i=>i.color)
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{position:"bottom"}}
+    }
+  })
+}
+// 更新决策饼图（后续事件可以调用这个函数修改权重）
+function refreshDecisionChart(){
+  if(decisionChart){
+    decisionChart.data.datasets[0].data = decisionPowerData.map(i=>i.weight);
+    decisionChart.update();
+  }
+}
+
+// 侧边栏展开收起逻辑
+const globalSide = document.getElementById('globalSide');
+const sideToggleBtn = document.getElementById('sideToggleBtn');
+const mapWrap = document.getElementById('mapWrap');
+sideToggleBtn.onclick = ()=>{
+  globalSide.classList.toggle('collapsed');
+  mapWrap.classList.toggle('sidebar-collapsed');
+  sideToggleBtn.innerText = globalSide.classList.contains('collapsed') ? "展开" : "收起";
+};
+
 // 判断触摸设备
 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 if(isTouchDevice){
   tooltipHover.style.display = "none";
 }
-
 panelClose.onclick = ()=>{
   closePanelAndClear();
 };
-
 // 渲染饼图函数
 function renderPie(pieStr){
   if(pieChart) pieChart.destroy();
@@ -357,7 +487,6 @@ function renderPie(pieStr){
     options:{responsive:true, maintainAspectRatio:false}
   })
 }
-
 function closePanelAndClear(){
   infoPanel.style.display = 'none';
   tooltipSelected.style.display = 'none';
@@ -366,14 +495,12 @@ function closePanelAndClear(){
   }
   activeItem = null;
 }
-
 // 点击空白区域关闭面板
 document.addEventListener('click', (e)=>{
   if(infoPanel.style.display !== 'block') return;
   if(infoPanel.contains(e.target)) return;
   closePanelAndClear();
 });
-
 pieces.forEach(el => {
   el.addEventListener('mouseenter', (e) => {
     tooltipHover.textContent = el.dataset.name;
@@ -399,7 +526,6 @@ pieces.forEach(el => {
       selectedNameDom.textContent = el.dataset.name;
       selectedDescDom.textContent = el.dataset.desc;
       tooltipSelected.style.display = 'block';
-
       panelTitle.innerText = el.dataset.name;
       powerDom.innerText = el.dataset.power;
       floorDom.innerText = el.dataset.floor;
@@ -409,14 +535,12 @@ pieces.forEach(el => {
     }
   });
 });
-
 // ===================== 游戏时间系统 =====================
 const gameTimeDom = document.getElementById('gameTime');
 const statStability = document.getElementById('statStability');
 const statSatisfaction = document.getElementById('statSatisfaction');
 const statMoney = document.getElementById('statMoney');
 const statAdmit = document.getElementById('statAdmit');
-
 let gameDate = {
   month:9,
   day:1,
@@ -427,7 +551,6 @@ const btnPause = document.getElementById('btnPause');
 const btnSpeed1 = document.getElementById('btnSpeed1');
 const btnSpeed3 = document.getElementById('btnSpeed3');
 const btnSpeed10 = document.getElementById('btnSpeed10');
-
 // 修复暂停：切换状态
 btnPause.onclick = ()=> {
   if(timeSpeed === 0){
@@ -441,12 +564,10 @@ btnPause.onclick = ()=> {
 btnSpeed1.onclick = ()=> { timeSpeed =1; btnPause.innerText="暂停"; };
 btnSpeed3.onclick = ()=> { timeSpeed =3; btnPause.innerText="暂停"; };
 btnSpeed10.onclick = ()=> { timeSpeed =10; btnPause.innerText="暂停"; };
-
 function renderGameTime(){
   let h = String(gameDate.hour).padStart(2,'0');
   gameTimeDom.textContent = `${gameDate.month}月${gameDate.day}日 ${h}:00`;
 }
-
 // 全局游戏状态
 const gameState = {
   stability: 85,
@@ -461,7 +582,6 @@ function refreshStatUI(){
   statAdmit.textContent = gameState.admitRate.toFixed(0)+"%";
 }
 refreshStatUI();
-
 // ===================== 【事件系统核心】 =====================
 // 事件池，在这里新增/修改事件
 const eventPool = [
@@ -477,11 +597,11 @@ const eventPool = [
     options:[
       {
         text:"耐心接待，增加后勤人手",
-        effect:{money:-10000, satisfaction:+5, stability:0, admitRate:0}
+        effect:{money:-10000, satisfaction:+5, stability:0, admitRate:0, decision:null}
       },
       {
         text:"简化流程，优先保障教学",
-        effect:{money:+3000, satisfaction:-3, stability:+2, admitRate:0}
+        effect:{money:+3000, satisfaction:-3, stability:+2, admitRate:0, decision:null}
       }
     ]
   },
@@ -496,16 +616,15 @@ const eventPool = [
     options:[
       {
         text:"削减非必要绿化维护",
-        effect:{money:+20000, stability:-4, satisfaction:0, admitRate:0}
+        effect:{money:+20000, stability:-4, satisfaction:0, admitRate:0, decision:null}
       },
       {
         text:"申请向上级追加拨款",
-        effect:{money:+10000, satisfaction:+2, stability:0, admitRate:0}
+        effect:{money:+10000, satisfaction:+2, stability:0, admitRate:0, decision:null}
       }
     ]
   }
 ];
-
 // 打开事件弹窗
 function showEvent(eventObj){
   eventTitle.innerText = eventObj.title;
@@ -514,7 +633,6 @@ function showEvent(eventObj){
   eventObj.options.forEach(opt=>{
     const btn = document.createElement('button');
     btn.className = "eventOption";
-
     // 拼接变化小字
     let effectTextParts = [];
     if(opt.effect.stability !== 0) effectTextParts.push(`稳定度 ${opt.effect.stability >0 ? '+' : ''}${opt.effect.stability}`);
@@ -522,12 +640,10 @@ function showEvent(eventObj){
     if(opt.effect.money !== 0) effectTextParts.push(`资金 ${opt.effect.money >0 ? '+' : ''}${opt.effect.money}`);
     if(opt.effect.admitRate !== 0) effectTextParts.push(`升学率 ${opt.effect.admitRate >0 ? '+' : ''}${opt.effect.admitRate}`);
     const effectText = effectTextParts.join('，');
-
     btn.innerHTML = `
       <div>${opt.text}</div>
       <div style="font-size:12px;opacity:0.7;margin-top:4px;">${effectText}</div>
     `;
-
     btn.onclick = ()=>{
       gameState.stability += opt.effect.stability;
       gameState.satisfaction += opt.effect.satisfaction;
@@ -537,6 +653,18 @@ function showEvent(eventObj){
       gameState.stability = Math.max(0, Math.min(100, gameState.stability));
       gameState.satisfaction = Math.max(0, Math.min(100, gameState.satisfaction));
       gameState.admitRate = Math.max(0, Math.min(100, gameState.admitRate));
+
+      // 如果事件修改决策权重，在这里处理
+      if(opt.effect.decision){
+        for(let key in opt.effect.decision){
+          const target = decisionPowerData.find(d=>d.name === key);
+          if(target) target.weight += opt.effect.decision[key];
+        }
+        // 权重限制总和100，最小0
+        decisionPowerData.forEach(d=> d.weight = Math.max(0,d.weight));
+        refreshDecisionChart();
+      }
+
       // 更新UI，关闭弹窗
       refreshStatUI();
       eventOverlay.style.display = "none";
@@ -545,7 +673,6 @@ function showEvent(eventObj){
   })
   eventOverlay.style.display = "flex";
 }
-
 // 每tick检测事件
 function checkEvents(){
   for(let evt of eventPool){
@@ -557,7 +684,6 @@ function checkEvents(){
     }
   }
 }
-
 function tickGameTime(){
   if(timeSpeed === 0) return;
   gameDate.hour += timeSpeed;
@@ -575,6 +701,7 @@ function tickGameTime(){
   checkEvents(); // 每次时间推进，检测事件
 }
 renderGameTime();
+initDecisionChart(); // 初始化全局决策饼图
 setInterval(tickGameTime, 1000);
 </script>
 </body>
