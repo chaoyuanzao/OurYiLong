@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>不规则区块悬浮上浮发光</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:#111;
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#container{
+  width:800px;
+  height:500px;
+}
+.piece{
+  fill:#223344;
+  stroke:#334455;
+  stroke-width:1;
+  transition: all 0.3s ease;
+  cursor:pointer;
+}
+.piece:hover{
+  /* 上浮：translateY负值向上；scale轻微放大 */
+  transform: translateY(-8px) scale(1.02);
+  /* 发光效果 */
+  filter: drop-shadow(0 0 12px #4af);
+  fill:#345577;
+}
+</style>
+</head>
+<body>
+<svg id="container" viewBox="0 0 800 500">
+  <!-- 多边形 points="x1 y1, x2 y2, x3 y3..." 可以自由修改顶点，做出不规则形状 -->
+  <polygon class="piece" points="0,0 260,20 240,220 0,200"></polygon>
+  <polygon class="piece" points="260,20 520,0 540,210 240,220"></polygon>
+  <polygon class="piece" points="520,0 800,0 800,230 540,210"></polygon>
+
+  <polygon class="piece" points="0,200 240,220 220,450 0,480"></polygon>
+  <polygon class="piece" points="240,220 540,210 510,470 220,450"></polygon>
+  <polygon class="piece" points="540,210 800,230 800,500 510,470"></polygon>
+</svg>
+
+<script>
+// 获取所有小块
+const pieces = document.querySelectorAll('.piece');
+pieces.forEach((el, idx)=>{
+  // JS 额外示例：鼠标移入打印当前块编号
+  el.addEventListener('mouseenter',()=>{
+    console.log('鼠标进入区块', idx);
+  })
+  el.addEventListener('mouseleave',()=>{
+    console.log('鼠标离开区块', idx);
+  })
+})
+</script>
+</body>
+</html>
