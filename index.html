@@ -49,7 +49,6 @@ body{
   display:flex;
   gap:8px;
 }
-
 #mainWrap{
   display:flex;
   height:calc(100vh - 48px);
@@ -80,7 +79,6 @@ body{
   stroke-width:2;
   fill:rgba(120, 200, 255, 0.38);
 }
-
 /* ========== 右侧全局决策面板（支持收起） ========== */
 #rightGlobalPanelWrap{
   position:relative;
@@ -124,7 +122,6 @@ body{
   width:100%;
   height:220px;
 }
-
 /* 悬浮提示 */
 #tooltipHover{
   position:fixed;
@@ -159,7 +156,6 @@ body{
   opacity:0.8;
   margin-top:3px;
 }
-
 /* ========== 区块详情弹窗 ========== */
 .infoPanel{
   position:fixed;
@@ -205,7 +201,6 @@ body{
   height:180px;
   margin:12px 0;
 }
-
 /* ========== 事件弹窗 ========== */
 .eventOverlay{
   position:fixed;
@@ -253,7 +248,6 @@ body{
 .eventOption:hover{
   background:#447;
 }
-
 /* ========== 左侧决议面板 ========== */
 #resolutionPanel{
   position:fixed;
@@ -339,7 +333,6 @@ body{
   background:#223;
   cursor:not-allowed;
 }
-
 /* ========== 右下角日志面板 ========== */
 #logPanel{
   position:fixed;
@@ -374,7 +367,6 @@ body{
   padding:4px 0;
   border-bottom:1px solid #333;
 }
-
 @media (max-width:768px){
   #mainWrap{flex-direction:column;}
   #rightGlobalPanel{width:100%;height:auto;}
@@ -410,7 +402,6 @@ body{
     <button id="toggleLogBtn">事件日志</button>
   </div>
 </div>
-
 <div id="mainWrap">
   <!-- ========== 地图区域 ========== -->
   <div id="mapWrap">
@@ -441,13 +432,12 @@ body{
       <polygon class="piece" data-name="操场围墙北" data-desc="操场北侧围墙范围" data-power="学校" data-floor="1F" data-facility="围墙" data-pie="学生,80,#4292c6;后勤,20,#74c476" points="1094.9 774.0,1298.9 791.0,1452.9 849.0,1457.9 958.0,1094.9 957.0,1093.9 770.0"/>
     </svg>
   </div>
-
   <!-- ========== 右侧全局面板（可折叠） ========== -->
   <div id="rightGlobalPanelWrap">
     <button id="togglePanelBtn">收起</button>
     <div id="rightGlobalPanel">
       <div class="logoBox">
-        <img alt="校徽" src="https://p3-flow-image-sign.byteimg.com/tos-cn-i-a9rns2rl98/00000000000000000000000000000000~tplv-a9rns2rl98-image.image">
+        <img alt="校徽" src="校徽.png">
       </div>
       <h3>校区全局决策状态</h3>
       <p>当前领导人：校长</p>
@@ -457,14 +447,12 @@ body{
     </div>
   </div>
 </div>
-
 <!-- 悬浮提示 -->
 <div id="tooltipHover"></div>
 <div id="tooltipSelected">
   <div class="name"></div>
   <div class="desc"></div>
 </div>
-
 <!-- ========== 区块详情面板 ========== -->
 <div class="infoPanel" id="infoPanel">
   <div class="panelHeader">
@@ -481,7 +469,6 @@ body{
     <div id="pieLegend"></div>
   </div>
 </div>
-
 <!-- ========== 事件弹窗 ========== -->
 <div class="eventOverlay" id="eventOverlay">
   <div class="eventBox">
@@ -490,7 +477,6 @@ body{
     <div id="eventOptionWrap"></div>
   </div>
 </div>
-
 <!-- ========== 左侧决议面板 ========== -->
 <div id="resolutionPanel" class="hidden">
   <div class="resPanelHeader">
@@ -500,7 +486,6 @@ body{
   <div class="resContent" id="resContent">
   </div>
 </div>
-
 <!-- ========== 右下角日志面板 ========== -->
 <div id="logPanel">
   <div class="logPanelHeader">
@@ -510,7 +495,6 @@ body{
   </div>
   <div class="logContent" id="logContent"></div>
 </div>
-
 <script>
 const tooltipHover = document.getElementById('tooltipHover');
 const tooltipSelected = document.getElementById('tooltipSelected');
@@ -518,7 +502,6 @@ const selectedNameDom = tooltipSelected.querySelector('.name');
 const selectedDescDom = tooltipSelected.querySelector('.desc');
 const pieces = document.querySelectorAll('.piece');
 let activeItem = null;
-
 const infoPanel = document.getElementById('infoPanel');
 const panelClose = document.getElementById('panelClose');
 const panelTitle = document.getElementById('panelTitle');
@@ -527,25 +510,21 @@ const floorDom = document.getElementById('floor');
 const facilityDom = document.getElementById('facilityList');
 const pieLegendDom = document.getElementById('pieLegend');
 let pieChart = null;
-let globalPieChart = null;
-
+let decisionPieChart = null;
 const eventOverlay = document.getElementById('eventOverlay');
 const eventTitle = document.getElementById('eventTitle');
 const eventDesc = document.getElementById('eventDesc');
 const eventOptionWrap = document.getElementById('eventOptionWrap');
-
 const toggleLeftResBtn = document.getElementById('toggleLeftResBtn');
 const resolutionPanel = document.getElementById('resolutionPanel');
 const closeResBtn = document.getElementById('closeResBtn');
 const resContent = document.getElementById('resContent');
-
 const toggleLogBtn = document.getElementById('toggleLogBtn');
 const logPanel = document.getElementById('logPanel');
 const closeLogBtn = document.getElementById('closeLogBtn');
 const logContent = document.getElementById('logContent');
 const clearLogBtn = document.getElementById('clearLogBtn');
 let eventLogList = [];
-
 // 右侧面板折叠控制
 const rightPanel = document.getElementById('rightGlobalPanel');
 const togglePanelBtn = document.getElementById('togglePanelBtn');
@@ -553,7 +532,6 @@ togglePanelBtn.onclick = ()=>{
   rightPanel.classList.toggle('collapsed');
   togglePanelBtn.innerText = rightPanel.classList.contains('collapsed') ? "展开" : "收起";
 };
-
 // ===================== 决议系统（改为消耗外勤） =====================
 let runningResolutions = [];
 const resolutionPool = [
@@ -610,11 +588,9 @@ const resolutionPool = [
     }
   }
 ];
-
 function getUsedOutsource(){
   return runningResolutions.reduce((sum, r)=> sum + r.outsourceCost, 0);
 }
-
 // 日志函数
 function addLog(text){
   const timeStr = `${gameDate.month}月${gameDate.day}日 ${String(gameDate.hour).padStart(2,'0')}:00`;
@@ -639,7 +615,6 @@ closeLogBtn.onclick = ()=> logPanel.style.display = "none";
 toggleLogBtn.onclick = ()=>{
   logPanel.style.display = logPanel.style.display === "block" ? "none" : "block";
 }
-
 //决议面板开关
 toggleLeftResBtn.onclick = ()=>{
   resolutionPanel.classList.toggle('hidden');
@@ -647,7 +622,6 @@ toggleLeftResBtn.onclick = ()=>{
 closeResBtn.onclick = ()=>{
   resolutionPanel.classList.add('hidden');
 }
-
 //渲染决议列表
 function renderResolutions(){
   const usedOutsource = getUsedOutsource();
@@ -703,7 +677,6 @@ function renderResolutions(){
     }
   })
 }
-
 function tickResolution(){
   const usedOutsource = getUsedOutsource();
   for(let i = runningResolutions.length -1; i >=0; i--){
@@ -733,21 +706,44 @@ function tickResolution(){
   refreshStatUI();
   renderResolutions();
 }
-
-// 全局势力饼图（右侧面板，人数权重：学生2000，教职工150，学生会50）
-function renderGlobalPie(){
-  if(globalPieChart) globalPieChart.destroy();
+// 决策层势力饼图（右侧全局面板）
+function renderDecisionPie(){
+  if(decisionPieChart) decisionPieChart.destroy();
+  const data = gameState.decisionPower;
   const ctx = document.getElementById('globalPieChart').getContext('2d');
-  globalPieChart = new Chart(ctx,{
+  decisionPieChart = new Chart(ctx,{
     type:'pie',
     data:{
-      labels:["普通学生(含学生会)","教职工","学生会"],
-      datasets:[{data:[1950,150,50], backgroundColor:["#4292c6","#74c476","#ffbc42"]}]
+      labels:["教职工","学生会","普通学生"],
+      datasets:[{
+        data:[data.staff, data.studentUnion, data.normalStudent],
+        backgroundColor:["#74c476","#ffbc42","#4292c6"]
+      }]
     },
     options:{responsive:true, maintainAspectRatio:false}
   })
 }
-
+/**
+ * 修改决策层权重
+ * @param {Object} change 例如 {staff:-2, normalStudent:+2}
+ */
+function changeDecisionPower(change){
+  for(let key in change){
+    gameState.decisionPower[key] += change[key];
+  }
+  //归一化，强制限制0~100，总和保持100
+  const dp = gameState.decisionPower;
+  let total = dp.staff + dp.studentUnion + dp.normalStudent;
+  dp.staff = Math.max(0, dp.staff / total * 100);
+  dp.studentUnion = Math.max(0, dp.studentUnion / total * 100);
+  dp.normalStudent = Math.max(0, dp.normalStudent / total * 100);
+  //重新归一，防止出现负数
+  const newTotal = dp.staff + dp.studentUnion + dp.normalStudent;
+  dp.staff = dp.staff / newTotal * 100;
+  dp.studentUnion = dp.studentUnion / newTotal * 100;
+  dp.normalStudent = dp.normalStudent / newTotal * 100;
+  renderDecisionPie(); //刷新饼图
+}
 // 地块内饼图
 function renderPie(pieStr){
   if(pieChart) pieChart.destroy();
@@ -773,7 +769,6 @@ function renderPie(pieStr){
     options:{responsive:true, maintainAspectRatio:false}
   })
 }
-
 function closePanelAndClear(){
   infoPanel.style.display = 'none';
   tooltipSelected.style.display = 'none';
@@ -788,7 +783,6 @@ document.addEventListener('click', (e)=>{
   if(infoPanel.contains(e.target)) return;
   closePanelAndClear();
 });
-
 pieces.forEach(el => {
   el.addEventListener('mouseenter', (e) => {
     tooltipHover.textContent = el.dataset.name;
@@ -823,7 +817,6 @@ pieces.forEach(el => {
     }
   });
 });
-
 //游戏时间系统
 const gameTimeDom = document.getElementById('gameTime');
 const statStability = document.getElementById('statStability');
@@ -831,14 +824,12 @@ const statSatisfaction = document.getElementById('statSatisfaction');
 const statMoney = document.getElementById('statMoney');
 const statOutsource = document.getElementById('statOutsource');
 const statAdmit = document.getElementById('statAdmit');
-
 let gameDate = {month:9, day:1, hour:8};
 let timeSpeed = 1;
 const btnPause = document.getElementById('btnPause');
 const btnSpeed1 = document.getElementById('btnSpeed1');
 const btnSpeed3 = document.getElementById('btnSpeed3');
 const btnSpeed10 = document.getElementById('btnSpeed10');
-
 btnPause.onclick = ()=> {
   if(timeSpeed === 0){
     timeSpeed = 1;
@@ -851,18 +842,22 @@ btnPause.onclick = ()=> {
 btnSpeed1.onclick = ()=> { timeSpeed =1; btnPause.innerText="暂停"; };
 btnSpeed3.onclick = ()=> { timeSpeed =3; btnPause.innerText="暂停"; };
 btnSpeed10.onclick = ()=> { timeSpeed =10; btnPause.innerText="暂停"; };
-
 function renderGameTime(){
   let h = String(gameDate.hour).padStart(2,'0');
   gameTimeDom.textContent = `${gameDate.month}月${gameDate.day}日 ${h}:00`;
 }
-
 const gameState = {
   stability: 85,
   satisfaction:78,
   money:250000,
   admitRate:62,
-  outsource:0 //外勤人力，花钱招募
+  outsource:0, //外勤人力，花钱招募
+  // ========== 新增决策层势力占比 总和=100 ==========
+  decisionPower:{
+    staff:95,        //教职工
+    studentUnion:4,  //学生会
+    normalStudent:1  //普通学生
+  }
 };
 function refreshStatUI(){
   const usedOutsource = getUsedOutsource();
@@ -875,25 +870,38 @@ function refreshStatUI(){
   renderResolutions();
 }
 refreshStatUI();
-
 //事件系统
 const eventPool = [
   {
     id:"event_first_day",
     triggered:false,
     condition: function(){
-      return gameDate.month ===9 && gameDate.day ===2 && gameDate.hour >=8;
+      return gameDate.month ===9 && gameDate.day ===1 && gameDate.hour >=8;
     },
     title:"开学第一天",
-    desc:"新学期正式开启，大量新生入校，校园内一片喧闹。部分家长担心食宿条件向校方咨询，你需要做出回应。",
+    desc:"主席台上那个带着眼镜的中年男人不见了，取而代之的是一个女人，响彻操场的声音“同学们大家好，我是你们的新校长殷海霞”，在新官上任约法三章之后，本学期的第一次校会落幕了，八九年级被疏散回班，他们没有机会看到七年级的“长征”队伍前往那个被称为新校区的地方了，他们来的地方，“以先驱的身份，祝福他们好运。”一个九年级学长这样说到。不知道新校长的到来会给这个逐渐衰落的学校带来什么改变呢？",
     options:[
       {
-        text:"耐心接待，增加后勤人手",
-        effect:{money:-10000, satisfaction:+5, stability:0, admitRate:0, outsource:0}
+        text:"纪文再见，海霞同志您好",
+        effect:{
+          money:0, 
+          satisfaction:+5, 
+          stability:+5, 
+          admitRate:0, 
+          outsource:0,
+          decisionPower:{staff:+2, normalStudent:-2}
+        }
       },
       {
-        text:"简化流程，优先保障教学",
-        effect:{money:+3000, satisfaction:-3, stability:+2, admitRate:0, outsource:0}
+        text:"纪文我们想你了",
+        effect:{
+          money:0, 
+          satisfaction:-3, 
+          stability:-2, 
+          admitRate:0, 
+          outsource:0,
+          decisionPower:{staff:-3, studentUnion:+3}
+        }
       }
     ]
   },
@@ -917,7 +925,6 @@ const eventPool = [
     ]
   }
 ];
-
 function showEvent(eventObj){
   eventTitle.innerText = eventObj.title;
   eventDesc.innerText = eventObj.desc;
@@ -931,6 +938,13 @@ function showEvent(eventObj){
     if(opt.effect.money !== 0) effectTextParts.push(`资金 ${opt.effect.money >0 ? '+' : ''}${opt.effect.money}`);
     if(opt.effect.admitRate !== 0) effectTextParts.push(`升学率 ${opt.effect.admitRate >0 ? '+' : ''}${opt.effect.admitRate}`);
     if(opt.effect.outsource !== 0) effectTextParts.push(`外勤 ${opt.effect.outsource >0 ? '+' : ''}${opt.effect.outsource}`);
+    //决策层势力变化文字
+    if(opt.effect.decisionPower){
+      const dp = opt.effect.decisionPower;
+      if(dp.staff) effectTextParts.push(`教职工话语权 ${dp.staff>0?'+':''}${dp.staff}%`);
+      if(dp.studentUnion) effectTextParts.push(`学生会话语权 ${dp.studentUnion>0?'+':''}${dp.studentUnion}%`);
+      if(dp.normalStudent) effectTextParts.push(`普通学生话语权 ${dp.normalStudent>0?'+':''}${dp.normalStudent}%`);
+    }
     const effectText = effectTextParts.join('，');
     btn.innerHTML = `
       <div>${opt.text}</div>
@@ -948,7 +962,13 @@ function showEvent(eventObj){
       gameState.outsource = Math.max(0, gameState.outsource);
       refreshStatUI();
       addLog(`事件【${eventObj.title}】选择：${opt.text}，变动：${effectText}`);
-      // ========== 新增这一行：点击选项自动关闭事件弹窗 ==========
+
+      // ========== 新增：如果选项有decisionPower，就执行权重修改 ==========
+      if(opt.effect.decisionPower){
+        changeDecisionPower(opt.effect.decisionPower);
+        addLog(`决策层势力发生变动`);
+      }
+
       eventOverlay.style.display = "none";
     };
     eventOptionWrap.appendChild(btn);
@@ -956,8 +976,6 @@ function showEvent(eventObj){
   eventOverlay.style.display = "flex";
   addLog(`触发事件：${eventObj.title}`);
 }
-
-
 function checkEvents(){
   for(let evt of eventPool){
     if(evt.triggered) continue;
@@ -968,7 +986,6 @@ function checkEvents(){
     }
   }
 }
-
 function tickGameTime(){
   if(timeSpeed === 0) return;
   gameDate.hour += timeSpeed;
@@ -986,12 +1003,11 @@ function tickGameTime(){
   checkEvents();
   tickResolution();
 }
-
 //初始化
 renderGameTime();
 renderResolutions();
 renderLog();
-renderGlobalPie();
+renderDecisionPie();
 setInterval(tickGameTime, 1000);
 </script>
 </body>
